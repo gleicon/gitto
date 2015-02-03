@@ -18,9 +18,8 @@ import (
 )
 
 func execCmd(cmd string, repo string) ([]byte, error) {
-	fc := fmt.Sprintf("https://github.com/%s", repo)
 	cmds := strings.Split(cmd, " ")
-	cmds = append(cmds, fc)
+	cmds = append(cmds, repo)
 	log.Println(cmds)
 	c := cmds[0]
 	out, err := exec.Command(c, cmds[1:]...).Output()
@@ -41,6 +40,7 @@ func handlePush(ref string, repository string, name string, applications []appli
 			if err != nil {
 				log.Println(err)
 			}
+			gh_repo := fmt.Sprintf("https://github.com/%s", repo)
 
 			if src != nil {
 				if !src.IsDir() {
@@ -49,7 +49,7 @@ func handlePush(ref string, repository string, name string, applications []appli
 				}
 				log.Printf("Chdir to %s\n", destDir)
 				os.Chdir(destDir)
-				out, err := execCmd(app.SyncCommand, repo)
+				out, err := execCmd(app.SyncCommand, gh_repo)
 				if err != nil {
 					log.Println(err)
 				}
@@ -57,12 +57,18 @@ func handlePush(ref string, repository string, name string, applications []appli
 			} else {
 				log.Printf("Chdir to %s", app.Path)
 				os.Chdir(app.Path)
-				out, err := execCmd(app.InitCommand, repo)
+				out, err := execCmd(app.InitCommand, gh_repo)
 				if err != nil {
 					log.Println(err)
 				}
 				log.Println(string(out))
 			}
+			out, err := execCmd(app.PostCommand, repo)
+			if err != nil {
+				log.Println(err)
+			}
+			log.Println(string(out))
+
 		}
 	}
 }
