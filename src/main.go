@@ -77,7 +77,9 @@ func main() {
 
 	// Start HTTP server.
 	s := new(httpServer)
-	s.init(config, rc)
+	mm := NewMetrics(rc)
+
+	s.init(config, rc, mm)
 	go s.ListenAndServe()
 	go s.ListenAndServeTLS()
 

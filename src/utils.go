@@ -29,12 +29,14 @@ func execCmd(cmd string, repo string) ([]byte, error) {
 	return out, nil
 }
 
-func handlePush(ref string, repository string, name string, applications []application) {
-	log.Printf("Ref: %s Repository: %s Name:%s\n", repository, ref, name)
+func handlePush(ref string, repository string, name string, applications []application, mm *Metrics) {
+	rr := fmt.Sprintf("Ref: %s Repository: %s Name:%s\n", repository, ref, name)
+	log.Printf(rr)
 	repo := fmt.Sprintf("%s/%s", name, repository)
 
 	for _, app := range applications {
 		if app.Repo == repo {
+			mm.AppendRequest(app.Name, rr)
 			destDir := fmt.Sprintf("%s/%s", app.Path, repository)
 			src, err := os.Stat(destDir)
 			if err != nil {
@@ -51,22 +53,28 @@ func handlePush(ref string, repository string, name string, applications []appli
 				os.Chdir(destDir)
 				out, err := execCmd(app.SyncCommand, gh_repo)
 				if err != nil {
+					mm.CounterIncr(app.Name, "error_init_command", 1)
 					log.Println(err)
 				}
 				log.Printf("cmd output %s", strings.TrimFunc(string(out), unicode.IsSpace))
+				mm.CounterIncr(app.Name, "sync_command", 1)
 			} else {
 				log.Printf("Chdir to %s", app.Path)
 				os.Chdir(app.Path)
 				out, err := execCmd(app.InitCommand, gh_repo)
 				if err != nil {
+					mm.CounterIncr(app.Name, "error_sync_command", 1)
 					log.Println(err)
 				}
 				log.Println(string(out))
+				mm.CounterIncr(app.Name, "init_command", 1)
 			}
 			out, err := execCmd(app.PostCommand, destDir)
 			if err != nil {
 				log.Println(err)
+				mm.CounterIncr(app.Name, "error_post_command", 1)
 			}
+			mm.CounterIncr(app.Name, "post_command", 1)
 			log.Println(string(out))
 
 		}

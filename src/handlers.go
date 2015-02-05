@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -15,9 +16,8 @@ import (
 func (s *httpServer) route() {
 
 	http.HandleFunc("/api/v1/github/hook", s.githubHookHandler)
-	http.HandleFunc("/api/v1/status", s.testHandler)
-	http.HandleFunc("/api/v1/pause", s.testHandler)
-	http.HandleFunc("/api/v1/apps", s.testHandler)
+	http.HandleFunc("/api/v1/status", s.statusHandler)
+	http.HandleFunc("/api/v1/requests/", s.requestsHandler)
 
 	// Static file server.
 	http.Handle("/", http.FileServer(http.Dir(s.config.DocumentRoot)))
@@ -25,6 +25,45 @@ func (s *httpServer) route() {
 
 func (s *httpServer) indexHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "hello, world\r\n")
+}
+
+func (s *httpServer) statusHandler(w http.ResponseWriter, r *http.Request) {
+	appc := make(map[string]map[string]string)
+	for _, application := range s.config.Application {
+		an := application.Name
+		cc, err := s.metrics.GetCounters(an)
+		if err != nil {
+			log.Println(err)
+		}
+		appc[an] = cc
+	}
+	jsonStatus, err := json.Marshal(appc)
+	if err != nil {
+		httpError(w, r, http.StatusInternalServerError, err)
+		return
+	}
+	fmt.Fprintf(w, string(jsonStatus))
+}
+
+func (s *httpServer) requestsHandler(w http.ResponseWriter, r *http.Request) {
+	appname := r.URL.Path[len("/api/v1/requests/"):]
+	if len(appname) < 1 {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+	rr, err := s.metrics.GetRequests(appname, 10)
+
+	if err != nil {
+		httpError(w, r, http.StatusInternalServerError, err)
+		return
+	}
+
+	jsonStatus, err := json.Marshal(rr)
+	if err != nil {
+		httpError(w, r, http.StatusInternalServerError, err)
+		return
+	}
+	fmt.Fprintf(w, string(jsonStatus))
 }
 
 func (s *httpServer) githubHookHandler(w http.ResponseWriter, r *http.Request) {
@@ -79,21 +118,10 @@ func (s *httpServer) githubHookHandler(w http.ResponseWriter, r *http.Request) {
 		repository := r["name"].(string)
 		name := n["name"].(string)
 
-		go handlePush(ref, repository, name, s.config.Application)
+		go handlePush(ref, repository, name, s.config.Application, s.metrics)
 		fmt.Fprintf(w, "OK\r\n")
 		return
 	}
 	http.Error(w, "Method not allowed", 405)
 	return
-}
-
-func (s *httpServer) testHandler(w http.ResponseWriter, r *http.Request) {
-	var v string
-	var err error
-	if v, err = s.redis.Get("hello"); err != nil {
-		httpError(w, r, 503, err)
-		return
-	}
-
-	fmt.Fprintf(w, "hello %s\r\n", v)
 }

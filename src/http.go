@@ -17,13 +17,15 @@ import (
 )
 
 type httpServer struct {
-	config *configFile
-	redis  *redis.Client
+	config  *configFile
+	redis   *redis.Client
+	metrics *Metrics
 }
 
-func (s *httpServer) init(cf *configFile, rc *redis.Client) {
+func (s *httpServer) init(cf *configFile, rc *redis.Client, mm *Metrics) {
 	s.config = cf
 	s.redis = rc
+	s.metrics = mm
 
 	// Initialize http handlers.
 	s.route()
