@@ -5,7 +5,6 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -20,13 +19,11 @@ import (
 type httpServer struct {
 	config *configFile
 	redis  *redis.Client
-	mysql  *sql.DB
 }
 
-func (s *httpServer) init(cf *configFile, rc *redis.Client, db *sql.DB) {
+func (s *httpServer) init(cf *configFile, rc *redis.Client) {
 	s.config = cf
 	s.redis = rc
-	s.mysql = db
 
 	// Initialize http handlers.
 	s.route()

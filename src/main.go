@@ -5,7 +5,6 @@
 package main
 
 import (
-	"database/sql"
 	"flag"
 	"fmt"
 	"log"
@@ -62,10 +61,6 @@ func main() {
 
 	// Set up databases.
 	rc := redis.New(config.DB.Redis)
-	db, err := sql.Open("mysql", config.DB.MySQL)
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	// Set GOMAXPROCS and show server info.
 	var cpuinfo string
@@ -82,7 +77,7 @@ func main() {
 
 	// Start HTTP server.
 	s := new(httpServer)
-	s.init(config, rc, db)
+	s.init(config, rc)
 	go s.ListenAndServe()
 	go s.ListenAndServeTLS()
 

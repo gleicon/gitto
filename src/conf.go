@@ -25,7 +25,6 @@ type configFile struct {
 	DocumentRoot string `toml:"document_root"`
 
 	DB struct {
-		MySQL string `toml:"mysql"`
 		Redis string `toml:"redis"`
 	} `toml:"db"`
 

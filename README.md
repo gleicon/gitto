@@ -40,6 +40,7 @@ This application listens to github webhook events and execute pre-configured act
 	Beyond name and repo, which will be prepended by github.com, you need to configure a destination path and 3 commands.
 	If a directory with "name" doesn't exists inside "path" gitto will run "init_command" for the first time.
 	For each push event sync_command will be executed inside "path"+/"+"repo" and subsequently "post_command" will be executed.
+	The full path to repository on filesystem will be passed as a parameter to post_command
 
 
 ## private repositories
@@ -47,7 +48,7 @@ This application listens to github webhook events and execute pre-configured act
 	- create the key for the user you will be running gitto
 	- you can test manually trying to clone the repo 
 
-## Preparing the environment to build
+## Preparing the build environment 
 
 Prerequisites:
 
@@ -80,5 +81,3 @@ Install, uninstall. Edit Makefile and set PREFIX to the target directory:
 Allow non-root process to listen on low ports:
 
 	/sbin/setcap 'cap_net_bind_service=+ep' /opt/gitto/server
-
-Good luck!

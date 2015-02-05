@@ -63,7 +63,7 @@ func handlePush(ref string, repository string, name string, applications []appli
 				}
 				log.Println(string(out))
 			}
-			out, err := execCmd(app.PostCommand, repo)
+			out, err := execCmd(app.PostCommand, destDir)
 			if err != nil {
 				log.Println(err)
 			}
