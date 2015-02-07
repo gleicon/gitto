@@ -27,15 +27,30 @@ func (s *httpServer) indexHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "hello, world\r\n")
 }
 
+type AppMetrics struct {
+	name       string
+	total      string
+	timeseries map[string]string
+}
+
 func (s *httpServer) statusHandler(w http.ResponseWriter, r *http.Request) {
-	appc := make(map[string]map[string]string)
+	appc := make(map[string]*AppMetrics)
 	for _, application := range s.config.Application {
 		an := application.Name
 		cc, err := s.metrics.GetCounters(an)
 		if err != nil {
 			log.Println(err)
 		}
-		appc[an] = cc
+		for counterName, counterValue := range cc {
+			appc[an] = new(AppMetrics)
+			appc[an].name = counterName
+			appc[an].total = counterValue
+			ts, err := s.metrics.FetchTS(an, counterName)
+			if err != nil {
+				log.Println(err)
+			}
+			appc[an].timeseries = ts
+		}
 	}
 	jsonStatus, err := json.Marshal(appc)
 	if err != nil {
