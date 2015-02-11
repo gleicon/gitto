@@ -48,8 +48,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	log.Println(config)
-
 	// Initialize log.
 	if *logFile != "" {
 		setLog(*logFile)

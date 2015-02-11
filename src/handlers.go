@@ -151,12 +151,15 @@ func (s *httpServer) travisHookHandler(w http.ResponseWriter, r *http.Request) {
 
 	if token != r.Header.Get("Authorization") {
 		log.Printf("Authorization error: %s - %s", token, r.Header.Get("Authorization"))
+		http.Error(w, "Not authorized", http.StatusForbidden)
+		return
 	}
+	log.Printf("Authorization %s - %s", token, r.Header.Get("Authorization"))
 
 	if r.Method == "POST" {
 		payload := r.FormValue("payload")
 
-		if payload != "" {
+		if payload == "" {
 			http.Error(w, "Empty payload", http.StatusForbidden)
 			return
 		}
@@ -173,22 +176,13 @@ func (s *httpServer) travisHookHandler(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Build status: %s", status_message)
 			return
 		}
-		/*
-			"repository": {
-				"id": 1,
-				"name": "minimal",
-				"owner_name": "svenfuchs",
-				"url": "http://github.com/svenfuchs/minimal"
-			},
-		*/
 
 		r := data["repository"].(map[string]interface{})
 
-		ref := data["url"].(string)
 		repository := r["name"].(string)
 		name := r["owner_name"].(string)
 
-		go handlePush(ref, repository, name, s.config.Application, s.metrics)
+		go handlePush("ref - travis", repository, name, s.config.Application, s.metrics)
 		fmt.Fprintf(w, "OK\r\n")
 		return
 	}
