@@ -10,6 +10,7 @@ This application listens to github webhook events and execute pre-configured act
 		debug = false
 		templates_dir = "./assets/templates"
 		document_root = "./assets/public_html"
+		travis_token = "travis_token"
 
 		[http_server]
 		addr = ":8080"
@@ -36,12 +37,17 @@ This application listens to github webhook events and execute pre-configured act
 		sync_command = "git pull"
 		post_command = "/bin/true"
 
-	For each project you want to monitor you need to create a new [[aplication]] session.
-	Beyond name and repo, which will be prepended by github.com, you need to configure a destination path and 3 commands.
-	If a directory with "name" doesn't exists inside "path" gitto will run "init_command" for the first time.
-	For each push event sync_command will be executed inside "path"+/"+"repo" and subsequently "post_command" will be executed.
-	The full path to repository on filesystem will be passed as a parameter to post_command
+For each project you want to monitor you need to create a new [[aplication]] session.
 
+Beyond name and repo, which will be prepended by github.com, you need to configure a destination path and 3 commands.
+
+If a directory with "name" doesn't exists inside "path" gitto will run "init_command" for the first time.
+
+For each push event sync_command will be executed inside "path"+/"+"repo" and subsequently "post_command" will be executed.
+
+The full path to repository on filesystem will be passed as a parameter to post_command
+
+If you want to get your notifications from Travis-CI, follow (http://docs.travis-ci.com/user/notifications/#Webhook-notification) and configure yout token at the config file. The rest of [[application]] wont change.
 
 ## private repositories
 	- follow github's public key procedure

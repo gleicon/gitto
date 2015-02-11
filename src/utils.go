@@ -5,6 +5,8 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -16,6 +18,13 @@ import (
 	"time"
 	"unicode"
 )
+
+func sha256Hexdigest(wot string) string {
+	h := sha256.New()
+	h.Write([]byte(wot))
+	return hex.EncodeToString(h.Sum(nil))
+
+}
 
 func execCmd(cmd string, repo string) ([]byte, error) {
 	cmds := strings.Split(cmd, " ")
@@ -30,7 +39,7 @@ func execCmd(cmd string, repo string) ([]byte, error) {
 }
 
 func handlePush(ref string, repository string, name string, applications []application, mm *Metrics) {
-	rr := fmt.Sprintf("Ref: %s Repository: %s Name:%s\n", repository, ref, name)
+	rr := fmt.Sprintf("Ref: %s Repository: %s Name:%s\n", ref, repository, name)
 	log.Printf(rr)
 	repo := fmt.Sprintf("%s/%s", name, repository)
 

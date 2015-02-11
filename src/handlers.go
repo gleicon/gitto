@@ -16,6 +16,7 @@ import (
 func (s *httpServer) route() {
 
 	http.HandleFunc("/api/v1/github/hook", s.githubHookHandler)
+	http.HandleFunc("/api/v1/travis/hook", s.travisHookHandler)
 	http.HandleFunc("/api/v1/status", s.statusHandler)
 	http.HandleFunc("/api/v1/requests/", s.requestsHandler)
 
@@ -50,8 +51,11 @@ func (s *httpServer) statusHandler(w http.ResponseWriter, r *http.Request) {
 				log.Println(err)
 			}
 			appc[an].timeseries = ts
+			log.Println(appc)
 		}
+		log.Println(appc)
 	}
+	log.Println(appc)
 	jsonStatus, err := json.Marshal(appc)
 	if err != nil {
 		httpError(w, r, http.StatusInternalServerError, err)
@@ -132,6 +136,57 @@ func (s *httpServer) githubHookHandler(w http.ResponseWriter, r *http.Request) {
 		ref := data["ref"].(string)
 		repository := r["name"].(string)
 		name := n["name"].(string)
+
+		go handlePush(ref, repository, name, s.config.Application, s.metrics)
+		fmt.Fprintf(w, "OK\r\n")
+		return
+	}
+	http.Error(w, "Method not allowed", 405)
+	return
+}
+
+func (s *httpServer) travisHookHandler(w http.ResponseWriter, r *http.Request) {
+	hh := fmt.Sprintf("%s%s", r.Header.Get("Travis-Repo-Slug"), s.config.TravisToken)
+	token := sha256Hexdigest(hh)
+
+	if token != r.Header.Get("Authorization") {
+		log.Printf("Authorization error: %s - %s", token, r.Header.Get("Authorization"))
+	}
+
+	if r.Method == "POST" {
+		payload := r.FormValue("payload")
+
+		if payload != "" {
+			http.Error(w, "Empty payload", http.StatusForbidden)
+			return
+		}
+
+		data := make(map[string]interface{})
+
+		err := json.Unmarshal([]byte(payload), &data)
+		if err != nil {
+			httpError(w, r, http.StatusInternalServerError, err)
+			return
+		}
+		status_message := data["status_message"]
+		if status_message != "Passed" {
+			log.Printf("Build status: %s", status_message)
+			return
+		}
+		/*
+			"repository": {
+				"id": 1,
+				"name": "minimal",
+				"owner_name": "svenfuchs",
+				"url": "http://github.com/svenfuchs/minimal"
+			},
+		*/
+
+		r := data["repository"].(map[string]interface{})
+
+		ref := data["url"].(string)
+		repository := r["name"].(string)
+		name := r["owner_name"].(string)
 
 		go handlePush(ref, repository, name, s.config.Application, s.metrics)
 		fmt.Fprintf(w, "OK\r\n")

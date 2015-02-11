@@ -23,6 +23,7 @@ type configFile struct {
 	Debug        bool   `toml:"debug"`
 	TemplatesDir string `toml:"templates_dir"`
 	DocumentRoot string `toml:"document_root"`
+	TravisToken  string `toml:"travis_token"`
 
 	DB struct {
 		Redis string `toml:"redis"`
