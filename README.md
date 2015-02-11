@@ -1,6 +1,6 @@
 ## gitto ?
 
-Smartass webhook handler for github repos. 
+Smartass webhook handler for github repos and travis-ci builds. 
 This application listens to github webhook events and execute pre-configured actions.
 
 ## configuration format
