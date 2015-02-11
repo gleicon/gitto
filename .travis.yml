@@ -1,2 +1,6 @@
 language: go
+notifications:
+  webhooks:
+    urls:
+      - http://1c97954b.ngrok.com/api/v1/travis
 
